@@ -1,0 +1,439 @@
+openapi: 3.0.0
+info:
+  title: NodeJS Assignment
+  description: A simple application which provides web services to facilitate group chat and manage data.
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000
+
+tags:
+  - name: Users
+    description: API endpoints related to users
+  - name: Groups
+    description: API endpoints related to groups
+  - name: Messages
+    description: API endpoints related to messages
+
+paths:
+  /api/users/:
+    post:
+      summary: Create a new user
+      tags: [Users]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - phoneNo
+                - username
+                - password
+                - isAdmin
+              properties:
+                name:
+                  type: string
+                phoneNo:
+                  type: string
+                  description: Phone number
+                username:
+                  type: string
+                password:
+                  type: string
+                  format: password
+                isAdmin:
+                  type: boolean
+              example:
+                name: John Doe
+                phoneNo: "1234567890"
+                username: johndoe
+                password: secret
+                isAdmin: false
+      responses:
+        201:
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        400:
+          description: Validation errors
+
+  /api/users/{id}:
+    put:
+      summary: Edit an existing user
+      tags: [Users]
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: User ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                phoneNo:
+                  type: string
+                username:
+                  type: string
+                password:
+                  type: string
+                  format: password
+                isAdmin:
+                  type: boolean
+              example:
+                name: John Doe
+                phoneNo: "1234567890"
+                username: johndoe
+                password: secret
+                isAdmin: false
+      responses:
+        200:
+          description: User updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        400:
+          description: Validation errors
+        404:
+          description: User not found
+
+  /api/groups:
+    post:
+      summary: Create a new group
+      tags: [Groups]
+      security:
+        - Bearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                  description: Name of the group
+              example:
+                name: "Developers"
+      responses:
+        201:
+          description: Group created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Group"
+        400:
+          description: Validation errors
+        503:
+          description: Something went wrong
+
+  /api/groups/{id}:
+    delete:
+      summary: Delete a group
+      tags: [Groups]
+      security:
+        - Bearer: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: ID of the group to be deleted
+      responses:
+        204:
+          description: Group deleted successfully
+        400:
+          description: Validation errors
+        404:
+          description: Group not found
+        500:
+          description: Internal server error
+
+  /api/groups/removeMember:
+    post:
+      summary: Remove a member from a group
+      tags: [Groups]
+      security:
+        - Bearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - userId
+                - groupId
+              properties:
+                userId:
+                  type: string
+                  description: ID of the user to be removed from the group
+                groupId:
+                  type: string
+                  description: ID of the group from which the user will be removed
+              example:
+                userId: "60c72b2f9b1e8b5a6c9b8e2b"
+                groupId: "60c72b2f9b1e8b5a6c9b8e2b"
+      responses:
+        200:
+          description: Member removed successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Group"
+        400:
+          description: Validation errors
+        500:
+          description: Internal server error
+
+  /api/groups/removeAdmin:
+    post:
+      summary: Remove an admin from a group
+      tags: [Groups]
+      security:
+        - Bearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - userId
+                - groupId
+              properties:
+                userId:
+                  type: string
+                  description: ID of the user to be removed as admin
+                groupId:
+                  type: string
+                  description: ID of the group to be removed as admin
+              example:
+                userId: "60c72b2f9b1e8b5a6c9b8e2b"
+                groupId: "60c72b2f9b1e8b5a6c9b8e2b"
+      responses:
+        200:
+          description: Admin removed successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Group"
+        400:
+          description: Validation errors
+        500:
+          description: Internal server error
+
+  /api/groups/addMember:
+    post:
+      summary: Add a member to a group
+      tags: [Groups]
+      security:
+        - Bearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - groupId
+                - userId
+              properties:
+                groupId:
+                  type: string
+                  description: ID of the group
+                userId:
+                  type: string
+                  description: ID of the user to be added
+              example:
+                groupId: "60c72b2f9b1e8b5a6c9b8e2a"
+                userId: "60c72b2f9b1e8b5a6c9b8e2b"
+      responses:
+        200:
+          description: Member added successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Group"
+        400:
+          description: Validation errors
+        500:
+          description: Internal server error
+
+  /api/groups/search:
+    get:
+      summary: Search for groups by name
+      tags: [Groups]
+      parameters:
+        - in: query
+          name: query
+          schema:
+            type: string
+          required: true
+          description: Search query
+      responses:
+        200:
+          description: Groups found
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Group"
+        400:
+          description: Validation errors
+
+  /api/groups/addAdmin:
+    post:
+      summary: Add an admin to a group
+      tags: [Groups]
+      security:
+        - Bearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - groupId
+                - userId
+              properties:
+                groupId:
+                  type: string
+                  description: ID of the group
+                userId:
+                  type: string
+                  description: ID of the user to be added
+              example:
+                groupId: "60c72b2f9b1e8b5a6c9b8e2a"
+                userId: "60c72b2f9b1e8b5a6c9b8e2b"
+      responses:
+        200:
+          description: Admin added successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Group"
+        400:
+          description: Validation errors
+        500:
+          description: Internal server error
+
+  /messages:
+    post:
+      summary: Send a message to a group
+      tags: [Messages]
+      security:
+        - Bearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - groupId
+                - content
+              properties:
+                groupId:
+                  type: string
+                  description: Group ID to which the message will be sent
+                content:
+                  type: string
+                  description: Content of the message
+              example:
+                groupId: "60c72b2f9b1e8b5a6c9b8e2a"
+                content: "Hello, team!"
+      responses:
+        201:
+          description: Message sent successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+        400:
+          description: Validation errors
+        500:
+          description: Something went wrong
+
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        phoneNo:
+          type: string
+        username:
+          type: string
+        password:
+          type: string
+          format: password
+        isAdmin:
+          type: boolean
+      example:
+        id: "60c72b2f9b1e8b5a6c9b8e2b"
+        name: John Doe
+        phoneNo: "1234567890"
+        username: johndoe
+        isAdmin: false
+
+    Group:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        members:
+          type: array
+          items:
+            $ref: "#/components/schemas/User"
+        admins:
+          type: array
+          items:
+            $ref: "#/components/schemas/User"
+      example:
+        id: "60c72b2f9b1e8b5a6c9b8e2a"
+        name: Developers
+        members:
+          - id: "60c72b2f9b1e8b5a6c9b8e2b"
+            name: John Doe
+        admins:
+          - id: "60c72b2f9b1e8b5a6c9b8e2b"
+            name: John Doe
+
+    Message:
+      type: object
+      properties:
+        id:
+          type: string
+        content:
+          type: string
+        groupId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      example:
+        id: "60c72b2f9b1e8b5a6c9b8e2b"
+        content: "Hello, team!"
+        groupId: "60c72b2f9b1e8b5a6c9b8e2a"
+        createdAt: "2024-09-01T12:34:56Z"
